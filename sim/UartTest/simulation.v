@@ -20,13 +20,13 @@ module simulation;
 
     CP = 0; RST = 1; #5 RST = 0;
 
-    en = 1; data = 8'h42; #10;
+    en = 1; data = 42; #5;
 
-    en = 0; #90;
+    en = 0; #900;
 
-    en = 1; data = 8'h23; #10;
+    en = 1; data = 23; #5;
 
-    en = 0; #90;
+    en = 0; #900;
 
     $finish;
   end

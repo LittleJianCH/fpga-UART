@@ -15,6 +15,7 @@ class UartTx(clock_freq: Int, uart_bps: Int) extends Module {
     val en = Input(Bool())
     val data = Input(UInt(8.W))
     val tx = Output(Bool())
+    val idle = Output(Bool())
   })
 
   val state = RegInit(State.idle)
@@ -27,11 +28,17 @@ class UartTx(clock_freq: Int, uart_bps: Int) extends Module {
     (state === State.txData) -> io.data(cntBit)
   ))
 
+  io.idle := (state === State.idle)
+
+  val nextCntClock = Mux(cntClock === (bps_cnt - 1).U, 0.U, cntClock + 1.U)
+
   switch (state) {
     is (State.idle) {
       when (io.en) {
         state := State.start
         cntClock := 0.U
+      } .otherwise {
+        cntClock := nextCntClock
       }
     }
 
@@ -40,6 +47,7 @@ class UartTx(clock_freq: Int, uart_bps: Int) extends Module {
         state := State.txData
         cntBit := 0.U
       }
+      cntClock := nextCntClock
     }
 
     is (State.txData) {
@@ -50,8 +58,7 @@ class UartTx(clock_freq: Int, uart_bps: Int) extends Module {
           cntBit := cntBit + 1.U
         }
       }
+      cntClock := nextCntClock
     }
   }
-
-  cntClock := Mux(cntClock === (bps_cnt - 1).U, 0.U, cntClock + 1.U)
 }

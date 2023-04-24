@@ -29,12 +29,16 @@ class UartRx(clock_freq: Int, uart_bps: Int) extends Module {
   val cntBit = RegInit(0.U(3.W))
   val state = RegInit(State.idle)
 
+  val nextCntClock = Mux(cntClock === (bps_cnt - 1).U, 0.U, cntClock + 1.U)
+
   switch (state) {
     is (State.idle) {
       when (rxNext && !io.rx) {
         state := State.start
         doneReg := false.B
         cntClock := 0.U
+      } .otherwise {
+        cntClock := nextCntClock
       }
     }
 
@@ -43,6 +47,7 @@ class UartRx(clock_freq: Int, uart_bps: Int) extends Module {
         state := State.rxData
         cntBit := 0.U
       }
+      cntClock := nextCntClock
     }
 
     is (State.rxData) {
@@ -56,8 +61,7 @@ class UartRx(clock_freq: Int, uart_bps: Int) extends Module {
           cntBit := cntBit + 1.U
         }
       }
+      cntClock := nextCntClock
     }
   }
-
-  cntClock := Mux(cntClock === (bps_cnt - 1).U, 0.U, cntClock + 1.U)
 }

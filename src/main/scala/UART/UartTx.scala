@@ -8,7 +8,7 @@ class UartTx(clock_freq: Int, uart_bps: Int) extends Module {
   val bps_cnt = clock_freq / uart_bps
 
   object State extends ChiselEnum {
-    val idle, start, txData = Value
+    val idle, start, txData, stop = Value
   }
 
   val io = IO(new Bundle {
@@ -53,10 +53,17 @@ class UartTx(clock_freq: Int, uart_bps: Int) extends Module {
     is (State.txData) {
       when (cntClock === (bps_cnt - 1).U) {
         when (cntBit === 7.U) {
-          state := State.idle
+          state := State.stop
         } .otherwise {
           cntBit := cntBit + 1.U
         }
+      }
+      cntClock := nextCntClock
+    }
+
+    is (State.stop) {
+      when (cntClock === (bps_cnt - 1).U) {
+        state := State.idle
       }
       cntClock := nextCntClock
     }
